@@ -1,3 +1,4 @@
+# app.py (version corrigée et simplifiée)
 from fastapi import FastAPI
 from pydantic import BaseModel
 import spacy
@@ -11,7 +12,13 @@ class In(BaseModel):
 @app.post("/infinitif")
 def infinitif(inp: In):
     doc = nlp(inp.text)
-    lemmas = [t.lemma_ for t in doc if t.pos_ == "VERB"]
-    if not lemmas and len(doc):  # fallback raisonnable
+    
+    # On prend simplement le lemme du premier mot. C'est tout.
+    # C'est plus robuste car même si spaCy se trompe de catégorie (verbe/nom),
+    # le lemme est souvent correct.
+    if len(doc) > 0:
         lemmas = [doc[0].lemma_]
+    else:
+        lemmas = [] # Gère le cas où le texte est vide
+
     return {"infinitifs": lemmas}
