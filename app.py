@@ -1,28 +1,28 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import re
+from typing import Optional
+
+try:
+    from verbe import Verbe
+    VERBE_AVAILABLE = True
+except ImportError:
+    VERBE_AVAILABLE = False
 
 app = FastAPI()
 
-# Dictionnaire simple des terminaisons de verbes français
+# Dictionnaires de lemmatisation (corrigés)
 VERB_ENDINGS = {
-    # Verbes du 1er groupe (-er)
     'ons': 'er', 'ez': 'er', 'ent': 'er', 'es': 'er', 'e': 'er',
     'ais': 'er', 'ait': 'er', 'ions': 'er', 'iez': 'er', 'aient': 'er',
     'ai': 'er', 'as': 'er', 'a': 'er', 'âmes': 'er', 'âtes': 'er', 'èrent': 'er',
     'erai': 'er', 'eras': 'er', 'era': 'er', 'erons': 'er', 'erez': 'er', 'eront': 'er',
-    
-    # Verbes du 2ème groupe (-ir)
     'is': 'ir', 'it': 'ir', 'issons': 'ir', 'issez': 'ir', 'issent': 'ir',
     'issais': 'ir', 'issait': 'ir', 'issions': 'ir', 'issiez': 'ir', 'issaient': 'ir',
     'irai': 'ir', 'iras': 'ir', 'ira': 'ir', 'irons': 'ir', 'irez': 'ir', 'iront': 'ir',
-    
-    # Verbes du 3ème groupe (irréguliers les plus courants)
     'ds': 're', 'd': 're', 'dons': 're', 'dez': 're', 'dent': 're',
     's': 're', 't': 're', 'vons': 'voir', 'vez': 'voir', 'vent': 'voir',
 }
 
-# Cas spéciaux fréquents
 SPECIAL_CASES = {
     'suis': 'être', 'es': 'être', 'est': 'être', 'sommes': 'être', 'êtes': 'être', 'sont': 'être',
     'étais': 'être', 'était': 'être', 'étions': 'être', 'étiez': 'être', 'étaient': 'être',
@@ -39,43 +39,74 @@ SPECIAL_CASES = {
     'mangeons': 'manger', 'mangez': 'manger', 'mangent': 'manger',
 }
 
-class WordRequest(BaseModel):
-    word: str
-
-class WordResponse(BaseModel):
-    lemma: str
-
 def lemmatize_french_verb(word: str) -> str:
     word = word.lower().strip()
-    
-    # Cas spéciaux
     if word in SPECIAL_CASES:
         return SPECIAL_CASES[word]
-    
-    # Recherche par terminaisons (du plus long au plus court)
     for ending in sorted(VERB_ENDINGS.keys(), key=len, reverse=True):
         if word.endswith(ending) and len(word) > len(ending):
             root = word[:-len(ending)]
             return root + VERB_ENDINGS[ending]
-    
-    # Si aucune règle ne s'applique, retourner le mot tel quel
     return word
+
+def detect_verb_tense(word: str) -> dict:
+    """Détecte le temps, mode et personne avec la bibliothèque 'verbe'."""
+    if not VERBE_AVAILABLE:
+        return {"temps": None, "mode": None, "personne": None}
+    
+    try:
+        results = Verbe.search(word.lower().strip())
+        if results:
+            first_result = results[0]
+            return {
+                "temps": first_result.temps,
+                "mode": first_result.mode,
+                "personne": first_result.personne
+            }
+    except Exception:
+        pass
+    return {"temps": None, "mode": None, "personne": None}
+
+class WordRequest(BaseModel):
+    word: str
+
+class AnalysisResponse(BaseModel):
+    lemme: str
+    temps: Optional[str] = None
+    mode: Optional[str] = None
+    personne: Optional[int] = None
 
 @app.get("/")
 async def root():
-    return {"message": "API de lemmatisation française", "status": "active"}
+    status = "avec détection du temps" if VERBE_AVAILABLE else "lemmatisation seulement"
+    return {"message": f"API de lemmatisation française ({status})", "status": "active"}
 
-@app.post("/lemmatize", response_model=WordResponse)
+@app.post("/analyser", response_model=AnalysisResponse)
+async def analyse_word(request: WordRequest):
+    try:
+        lemme = lemmatize_french_verb(request.word)
+        tense_info = detect_verb_tense(request.word)
+        
+        return AnalysisResponse(
+            lemme=lemme,
+            temps=tense_info["temps"],
+            mode=tense_info["mode"],
+            personne=tense_info["personne"]
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/lemmatize")  # Garde l'ancien endpoint pour compatibilité
 async def lemmatize_word(request: WordRequest):
     try:
         lemma = lemmatize_french_verb(request.word)
-        return WordResponse(lemma=lemma)
+        return {"lemma": lemma}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "verbe_library": VERBE_AVAILABLE}
 
 if __name__ == "__main__":
     import uvicorn
