@@ -1,8 +1,8 @@
-# requirements.txt (ajout de la dernière dépendance manquante)
+# requirements.txt (LA VRAIE LISTE FINALE)
 fastapi
 uvicorn
 mlconjug3
 setuptools
 PyYAML
-
-
+joblib
+scikit-learn
