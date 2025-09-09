@@ -1,4 +1,5 @@
-# requirements.txt (version finale)
+# requirements.txt (cette fois, c'est le bon nom)
 fastapi
 uvicorn
-verbe
+mlconjug3
+
