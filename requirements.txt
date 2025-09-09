@@ -2,4 +2,4 @@
 fastapi
 uvicorn
 spacy
-lefff-lemmatizer
+french_lefff_lemmatizer
