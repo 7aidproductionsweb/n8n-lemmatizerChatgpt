@@ -1,17 +1,10 @@
-# app.py (version finale, corrigée pour mlconjug3)
+# app.py (Version finale, simple et fonctionnelle)
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-# L'import correct pour la bibliothèque mlconjug3
-from mlconjug3 import Conjugator
 
-app = FastAPI()
+app = FastAPI(title="Lemmatiseur Français Simple")
 
-# Initialiser le conjugueur pour le français
-conjugator = Conjugator(language='fr')
-
-# ====================================================================
-# VOTRE CODE DE LEMMATISATION EXISTANT (INCHANGÉ)
-# ====================================================================
+# VOTRE CODE QUI FONCTIONNE
 VERB_ENDINGS = {
     'ons': 'er', 'ez': 'er', 'ent': 'er', 'es': 'er', 'e': 'er',
     'ais': 'er', 'ait': 'er', 'ions': 'er', 'iez': 'er', 'aient': 'er',
@@ -49,60 +42,16 @@ def lemmatize_french_verb(word: str) -> str:
             return root + VERB_ENDINGS[ending]
     return word
 
-# ====================================================================
-# NOUVELLE FONCTION POUR DÉTECTER LE TEMPS (avec mlconjug3)
-# ====================================================================
-def detect_verb_tense(word: str) -> dict:
-    """Utilise la bibliothèque 'mlconjug3' pour trouver le temps, le mode, etc."""
-    try:
-        # La méthode 'conjugate' de mlconjug3 peut aussi trouver l'infinitif
-        conjugated_verb = conjugator.conjugate(word.lower().strip())
-        if conjugated_verb:
-            # On extrait les informations de la conjugaison trouvée
-            conjugation_info = conjugated_verb.conjug_info
-            return {
-                "infinitif_mlconjug": conjugated_verb.name, # L'infinitif trouvé par la lib
-                "temps": conjugation_info.get('temps'),
-                "mode": conjugation_info.get('mode'),
-                "personne": conjugation_info.get('personne')
-            }
-    except Exception:
-        pass
-    return {"infinitif_mlconjug": None, "temps": None, "mode": None, "personne": None}
-
-# ====================================================================
-# MODÈLES DE DONNÉES ET POINTS DE TERMINAISON MIS À JOUR
-# ====================================================================
 class WordRequest(BaseModel):
     word: str
 
-class AnalysisResponse(BaseModel):
-    lemme_perso: str
-    infinitif_lib: str | None
-    temps: str | None
-    mode: str | None
-    personne: str | None
+class WordResponse(BaseModel):
+    lemme: str
 
-@app.post("/analyser", response_model=AnalysisResponse)
-async def analyse_word(request: WordRequest):
-    """
-    Analyse un mot pour retourner son lemme (votre méthode) 
-    et son temps (via la bibliothèque 'mlconjug3').
-    """
+@app.post("/lemmatize", response_model=WordResponse)
+async def lemmatize_word(request: WordRequest):
     try:
-        lemme_perso = lemmatize_french_verb(request.word)
-        tense_info = detect_verb_tense(request.word)
-        
-        return AnalysisResponse(
-            lemme_perso=lemme_perso,
-            infinitif_lib=tense_info["infinitif_mlconjug"],
-            temps=tense_info["temps"],
-            mode=tense_info["mode"],
-            personne=tense_info["personne"]
-        )
+        lemme = lemmatize_french_verb(request.word)
+        return WordResponse(lemme=lemme)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/health")
-async def health_check():
-    return {"status": "ok"}
