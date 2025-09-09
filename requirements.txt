@@ -1,5 +1,6 @@
-# requirements.txt (cette fois, c'est le bon nom)
+# requirements.txt (correction finale pour pkg_resources)
 fastapi
 uvicorn
 mlconjug3
+setuptools
 
