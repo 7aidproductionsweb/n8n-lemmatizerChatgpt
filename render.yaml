@@ -1,7 +1,7 @@
 services:
   - type: web
-    name: spacy-fr-lemmatiseur
-    runtime: python
-    plan: free
-    buildCommand: pip install -r requirements.txt && python -m spacy download fr_core_news_sm
+    name: lemmatizer-api
+    env: python
+    buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    plan: free
