@@ -1,11 +1,13 @@
-# requirements.txt (Liste complète et vérifiée)
+# requirements.txt (Version finale avec versions figées)
 fastapi
 uvicorn
 mlconjug3
 setuptools
 PyYAML
-joblib
-scikit-learn
 defusedxml
 numpy
 pandas
+
+# On force les versions compatibles avec le modèle pré-entraîné de mlconjug3
+scikit-learn==1.3.0
+joblib==1.3.2
