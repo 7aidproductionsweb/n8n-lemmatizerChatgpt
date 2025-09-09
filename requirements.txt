@@ -1,3 +1,5 @@
+# requirements.txt (version finale)
 fastapi
 uvicorn
 spacy
+lefff-lemmatizer
