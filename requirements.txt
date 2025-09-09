@@ -1,4 +1,4 @@
-# requirements.txt (LA VRAIE LISTE FINALE)
+# requirements.txt (Liste complète et vérifiée)
 fastapi
 uvicorn
 mlconjug3
@@ -6,3 +6,6 @@ setuptools
 PyYAML
 joblib
 scikit-learn
+defusedxml
+numpy
+pandas
