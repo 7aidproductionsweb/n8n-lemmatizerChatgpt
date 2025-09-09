@@ -1,5 +1,3 @@
 # requirements.txt (version finale)
 fastapi
 uvicorn
-spacy
-french_lefff_lemmatizer
