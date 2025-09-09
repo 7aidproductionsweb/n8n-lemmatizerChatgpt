@@ -1,11 +1,14 @@
-# requirements.txt (Version finale avec versions figées)
+# requirements.txt (LA CONFIGURATION DE COMPATIBILITÉ FINALE)
 fastapi
 uvicorn
 mlconjug3
 setuptools
 PyYAML
 defusedxml
-numpy
 pandas
+joblib
+
+# On force les versions compatibles entre elles
 scikit-learn==1.3.0
-joblib==1.3.2
+numpy==1.26.4
+
