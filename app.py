@@ -50,21 +50,47 @@ def lemmatize_french_verb(word: str) -> str:
     return word
 
 def detect_verb_tense(word: str) -> dict:
-    """Détecte le temps, mode et personne avec la bibliothèque 'verbe'."""
-    if not VERBE_AVAILABLE:
-        return {"temps": None, "mode": None, "personne": None}
+    """Détecte le temps, mode et personne avec fallback sur règles simples."""
+    word_clean = word.lower().strip()
     
-    try:
-        results = Verbe.search(word.lower().strip())
-        if results:
-            first_result = results[0]
-            return {
-                "temps": first_result.temps,
-                "mode": first_result.mode,
-                "personne": first_result.personne
-            }
-    except Exception:
-        pass
+    # Essai avec bibliothèque verbe d'abord
+    if VERBE_AVAILABLE:
+        try:
+            results = Verbe.search(word_clean)
+            if results:
+                first_result = results[0]
+                return {
+                    "temps": first_result.temps,
+                    "mode": first_result.mode,
+                    "personne": first_result.personne
+                }
+        except Exception:
+            pass
+    
+    # Fallback : règles basiques par terminaisons
+    tense_patterns = {
+        # Présent
+        ('e', 'es', 'ons', 'ez', 'ent'): "présent",
+        ('is', 'it', 'issons', 'issez', 'issent'): "présent",
+        ('s', 't', 'vons', 'vez', 'vent'): "présent",
+        
+        # Imparfait
+        ('ais', 'ait', 'ions', 'iez', 'aient'): "imparfait",
+        ('issais', 'issait', 'issions', 'issiez', 'issaient'): "imparfait",
+        
+        # Futur
+        ('erai', 'eras', 'era', 'erons', 'erez', 'eront'): "futur",
+        ('irai', 'iras', 'ira', 'irons', 'irez', 'iront'): "futur",
+        
+        # Passé simple
+        ('ai', 'as', 'a', 'âmes', 'âtes', 'èrent'): "passé simple"
+    }
+    
+    for endings, tense in tense_patterns.items():
+        for ending in endings:
+            if word_clean.endswith(ending):
+                return {"temps": tense, "mode": "indicatif", "personne": None}
+    
     return {"temps": None, "mode": None, "personne": None}
 
 class WordRequest(BaseModel):
