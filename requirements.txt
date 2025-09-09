@@ -1,4 +1,3 @@
 # requirements.txt (version finale)
 fastapi
 uvicorn
-verbe
