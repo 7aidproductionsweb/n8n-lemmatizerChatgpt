@@ -1,6 +1,8 @@
-# requirements.txt (correction finale pour pkg_resources)
+# requirements.txt (ajout de la dernière dépendance manquante)
 fastapi
 uvicorn
 mlconjug3
 setuptools
+PyYAML
+
 
