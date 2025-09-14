@@ -1,7 +1,9 @@
 services:
   - type: web
-    name: lemmatizer-api
+    name: french-lemmatizer
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    buildCommand: |
+      pip install -r requirements.txt
+      python -m spacy download fr_core_news_sm
+    startCommand: "uvicorn app:app --host 0.0.0.0 --port 10000"
     plan: free
